@@ -1,6 +1,7 @@
 /**
- * Copyright (c) 2013-2016, Damian Vicino
- * Carleton University, Universite de Nice-Sophia Antipolis
+ * Copyright (c) 2016
+ * Cristina Ruiz Martín
+ * Carleton University, Universidad de Valladolid
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +46,15 @@ namespace cadmium {
    *
   */
 
+    template<typename VALUE> 
+      struct receiver_defs {
+
+      struct out : public out_port<VALUE> {
+      };
+      struct in : public in_port<VALUE> {
+      };
+    };
+
     template<typename VALUE, typename TIME> 
       struct receiver {
             
@@ -57,12 +67,7 @@ namespace cadmium {
         int ackNum;
       };
   
-      //ports
-      struct out : public out_port<VALUE> {
-      };
-      struct in : public in_port<VALUE> {
-      };
-  
+      using defs = receiver_defs<VALUE>;
       //required definitions start here
       //state
       using state_type = receiver_state;
@@ -76,8 +81,8 @@ namespace cadmium {
       constexpr receiver() noexcept {}
 
       //ports_definition
-      using input_ports=std::tuple<in>;
-      using output_ports=std::tuple<out>;
+      using input_ports=std::tuple<typename defs::in>;
+      using output_ports=std::tuple<typename defs::out>;
   
       // PDEVS functions
       void internal_transition() {
@@ -86,11 +91,11 @@ namespace cadmium {
   
       void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
         
-        if(get_messages<in>(mbs).size()!=1){
+        if(get_messages<typename defs::in>(mbs).size()!=1){
           throw std::logic_error("Only one message at a time");
         }         
         
-        state.ackNum = static_cast < int > (get_messages<in>(mbs)[0]);
+        state.ackNum = static_cast < int > (get_messages<typename defs::in>(mbs)[0]);
         state.active = true;
       }
   
@@ -101,7 +106,7 @@ namespace cadmium {
       typename make_message_bags<output_ports>::type output() {             
   
         typename make_message_bags<output_ports>::type outmb;
-        get_messages<out>(outmb).emplace_back(state.ackNum % 10);
+        get_messages<typename defs::out>(outmb).emplace_back(state.ackNum % 10);
         
         return outmb;
       }

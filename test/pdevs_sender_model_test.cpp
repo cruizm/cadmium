@@ -37,6 +37,7 @@ BOOST_AUTO_TEST_SUITE( pdevs_basic_models_suite )
     BOOST_AUTO_TEST_SUITE( pdevs_sender_suite )
 
         using floating_sender=cadmium::basic_models::sender<int, float>;
+        using floating_sender_defs=cadmium::basic_models::sender_defs<int>;
 
         BOOST_AUTO_TEST_CASE( it_is_constructable_test )
         {

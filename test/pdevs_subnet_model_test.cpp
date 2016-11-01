@@ -36,11 +36,12 @@
 BOOST_AUTO_TEST_SUITE( pdevs_basic_models_suite )
     BOOST_AUTO_TEST_SUITE( pdevs_subnet_suite )
 
-        using floating_subnet=cadmium::basic_models::subnet<int, float>;
+        using int_subnet=cadmium::basic_models::subnet<int, float>;
+         using int_subnet_defs=cadmium::basic_models::subnet_defs<int>;
 
         BOOST_AUTO_TEST_CASE( it_is_constructable_test )
         {
-            BOOST_REQUIRE_NO_THROW( floating_subnet{} );
+            BOOST_REQUIRE_NO_THROW( int_subnet{} );
         }
     //How the model works will be tested sendig and input and comparing the output against a validated one
 

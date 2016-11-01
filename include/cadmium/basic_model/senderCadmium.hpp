@@ -1,6 +1,7 @@
 /**
- * Copyright (c) 2013-2016, Damian Vicino
- * Carleton University, Universite de Nice-Sophia Antipolis
+ * Copyright (c) 2016
+ * Cristina Ruiz Martín
+ * Carleton University, Universidad de Valladolid
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +46,21 @@ namespace cadmium {
    *
   */
 
+    template<typename VALUE> //value is the type of accumulated values
+      struct sender_defs {
+
+      struct dataOut : public out_port<VALUE> {
+      };
+      struct ackReceived : public out_port<VALUE> {
+      };
+      struct packetSent : public out_port<VALUE> {
+      };
+      struct controlIn : public in_port<VALUE> {
+      };
+      struct ackIn : public in_port<VALUE> {
+      };
+  };
+
     template<typename VALUE, typename TIME> //value is the type of accumulated values
       struct sender {
             
@@ -69,17 +85,7 @@ namespace cadmium {
         TIME next_internal;
       };
   
-      //ports
-      struct dataOut : public out_port<VALUE> {
-      };
-      struct ackReceived : public out_port<VALUE> {
-      };
-      struct packetSent : public out_port<VALUE> {
-      };
-      struct controlIn : public in_port<VALUE> {
-      };
-      struct ackIn : public in_port<VALUE> {
-      };
+      using defs = sender_defs<VALUE>;
   
       //required definitions start here
       //state
@@ -97,8 +103,8 @@ namespace cadmium {
       constexpr sender() noexcept {}
 
       //ports_definition
-      using input_ports=std::tuple<controlIn, ackIn>;
-      using output_ports=std::tuple<dataOut, ackReceived, packetSent>;
+      using input_ports=std::tuple<typename defs::controlIn, typename defs::ackIn>;
+      using output_ports=std::tuple<typename defs::dataOut, typename defs::ackReceived, typename defs::packetSent>;
   
       // PDEVS functions
       void internal_transition() {
@@ -129,10 +135,10 @@ namespace cadmium {
   
       void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
          
-        assert(get_messages<controlIn>(mbs).size()==1 && "Only one message at a time");
-        assert(get_messages<ackIn>(mbs).size()==1 && "Only one message at a time");
+        assert(get_messages<typename defs::controlIn>(mbs).size()==1 && "Only one message at a time");
+        assert(get_messages<typename defs::ackIn>(mbs).size()==1 && "Only one message at a time");
         
-        for (const auto &x : get_messages<controlIn>(mbs)) {
+        for (const auto &x : get_messages<typename defs::controlIn>(mbs)) {
           if(state.active == false){
             state.totalPacketNum = static_cast < int > (x);
             if (state.totalPacketNum > 0){
@@ -150,7 +156,7 @@ namespace cadmium {
           }
         }
 
-        for (const auto &x : get_messages<ackIn>(mbs)) {
+        for (const auto &x : get_messages<typename defs::ackIn>(mbs)) {
           if(state.active == true){
             if (state.alt_bit == static_cast < int > (x)){
               state.ack = true;
@@ -174,10 +180,10 @@ namespace cadmium {
         typename make_message_bags<output_ports>::type outmb;
 
         if (state.sending){
-          get_messages<dataOut>(outmb).emplace_back(state.packetNum * 10 + state.alt_bit);
-          get_messages<packetSent>(outmb).emplace_back(state.packetNum);
+          get_messages<typename defs::dataOut>(outmb).emplace_back(state.packetNum * 10 + state.alt_bit);
+          get_messages<typename defs::packetSent>(outmb).emplace_back(state.packetNum);
         }else{
-          if (state.ack) get_messages<ackReceived>(outmb).emplace_back(state.alt_bit);
+          if (state.ack) get_messages<typename defs::ackReceived>(outmb).emplace_back(state.alt_bit);
         }   
         
         return outmb;

@@ -1,6 +1,7 @@
 /**
- * Copyright (c) 2013-2016, Damian Vicino
- * Carleton University, Universite de Nice-Sophia Antipolis
+ * Copyright (c) 2016
+ * Cristina Ruiz Martín
+ * Carleton University, Universidad de Valladolid
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +45,15 @@ namespace cadmium {
    * @brief SUBNET PDEVS Model.
    *
   */
+    template<typename VALUE> //value is the type of accumulated values
+      struct subnet_defs {
+
+      struct out : public out_port<VALUE> {
+      };
+      struct in : public in_port<VALUE> {
+      };
+    };
+  
 
     template<typename VALUE, typename TIME> //value is the type of accumulated values
       struct subnet {
@@ -59,11 +69,7 @@ namespace cadmium {
         int index;
       };
   
-      //ports
-      struct out : public out_port<VALUE> {
-      };
-      struct in : public in_port<VALUE> {
-      };
+      using defs = subnet_defs<VALUE>;
   
       //required definitions start here
       //state
@@ -77,8 +83,8 @@ namespace cadmium {
       constexpr subnet() noexcept {}
 
       //ports_definition
-      using input_ports=std::tuple<in>;
-      using output_ports=std::tuple<out>;
+      using input_ports=std::tuple<typename defs::in>;
+      using output_ports=std::tuple<typename defs::out>;
   
       // PDEVS functions
       void internal_transition() {
@@ -87,10 +93,10 @@ namespace cadmium {
   
       void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
          
-        assert(get_messages<in>(mbs).size()==1 && "Only one message at a time");
+        assert(get_messages<typename defs::in>(mbs).size()==1 && "Only one message at a time");
         state.index ++;
         
-        for (const auto &x : get_messages<in>(mbs)) {
+        for (const auto &x : get_messages<typename defs::in>(mbs)) {
           state.packet = static_cast < int > (x);
           state.active = true;
         }
@@ -105,7 +111,7 @@ namespace cadmium {
         typename make_message_bags<output_ports>::type outmb;
 
         if ((double)rand() / (double) RAND_MAX  < 0.95){
-          get_messages<out>(outmb).emplace_back(state.packet);
+          get_messages<typename defs::out>(outmb).emplace_back(state.packet);
         }   
         
         return outmb;
